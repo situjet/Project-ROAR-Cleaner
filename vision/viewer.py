@@ -4,8 +4,8 @@ import cv2
 from collections import deque
 from imutils.video import VideoStream
 import argparse
-import imutils
 import time
+from frame_processor import get_circles
 
 
 ap = argparse.ArgumentParser()
@@ -32,45 +32,23 @@ greenUpper = (64, 255, 255)
 
 # Start a while loop
 while(1):
+
     # Reading the video from the
     # webcam in image frames
     input_frame = vs.read()
-    frame = input_frame.copy()
-
-    blurred = cv2.medianBlur(frame, 5)
-    hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
     
-    mask = cv2.inRange(hsv, greenLower, greenUpper)
-    mask = cv2.GaussianBlur(mask, (11, 11), 2, 2)
-
-
-    # find contours in the mask and initialize the current
-	# (x, y) center of the ball
-    
-    cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    cnts = imutils.grab_contours(cnts)
-    center = None
-
-    circles = cv2.HoughCircles(mask, 
-        cv2.HOUGH_GRADIENT, 
-        1, 
-        mask.shape[0] / 8, 
-        param1=100, 
-        param2=20, 
-        minRadius=0, 
-        maxRadius=0)
+    circles = get_circles(input_frame)
 
     if circles is not None:
         circles = np.round(circles[0, :]).astype("int")
-        cv2.circle(frame, 
+        cv2.circle(input_frame, 
             center=(circles[0, 0], circles[0, 1]), 
             radius=circles[0, 2], 
             color=(0, 255, 0), 
             thickness=2)
 
-
     # Display the resulting frame, quit with q
-    cv2.imshow('frame', frame)
+    cv2.imshow('frame', input_frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
