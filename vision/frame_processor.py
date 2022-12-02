@@ -2,8 +2,8 @@
 import numpy as np
 import cv2
 
-greenLower = (29, 86, 6)
-greenUpper = (64, 255, 255)
+greenLower = (15, 40, 40)
+greenUpper = (115, 255, 255)
 
 def get_circles(input_frame):
     frame = input_frame.copy()
@@ -18,8 +18,8 @@ def get_circles(input_frame):
         cv2.HOUGH_GRADIENT, 
         1, 
         mask.shape[0] / 8, 
-        param1=100, 
-        param2=20, 
+        param1=110, 
+        param2=70, 
         minRadius=0, 
         maxRadius=0)
 

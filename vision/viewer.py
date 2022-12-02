@@ -27,8 +27,8 @@ else:
 # allow the camera or video file to warm up
 time.sleep(2.0)
 
-greenLower = (29, 86, 6)
-greenUpper = (64, 255, 255)
+greenLower = (15, 40, 40)
+greenUpper = (115, 255, 255)
 
 # Start a while loop
 while(1):
