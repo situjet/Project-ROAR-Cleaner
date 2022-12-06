@@ -11,6 +11,24 @@ import numpy as np
 from matplotlib import pyplot as plt
 import cv2
 
+def unit_vector(vector):
+    """ Returns the unit vector of the vector.  """
+    return vector / np.linalg.norm(vector)
+
+def angle_between(v1, v2):
+    """ Returns the angle in radians between vectors 'v1' and 'v2'::
+
+            >>> angle_between((1, 0, 0), (0, 1, 0))
+            1.5707963267948966
+            >>> angle_between((1, 0, 0), (1, 0, 0))
+            0.0
+            >>> angle_between((1, 0, 0), (-1, 0, 0))
+            3.141592653589793
+    """
+    v1_u = unit_vector(v1)
+    v2_u = unit_vector(v2)
+    return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
+
 class RTBAgent(Agent):
     def __init__(self, vehicle: Vehicle, agent_settings: AgentConfig, **kwargs):
         super().__init__(vehicle, agent_settings, **kwargs)
@@ -28,21 +46,24 @@ class RTBAgent(Agent):
 
         goal_pos = np.array([1, 1])
         goal_x = goal_pos[0]
-        goal_y = goal_pos[1]
+        goal_z = goal_pos[1]
+
+        
 
         if trans and depth_img and start_trans is not None:
             depth_img = depth_img.copy()
             depth_img[0:len(depth_img)//2] = 0
 
             #generate vector from vehicle to home/base positions
-            home_vector = np.array([0 - x_t, 0 - z_t])
-            goal_vec = np.array([goal_x - x_t, goal_y - z_t])
+            car_goal_vec = np.array([goal_x - x_t, goal_z - z_t])
+            car_vec = np.array([0 - x_t, 0 - z_t])
 
             #finding the deflection between psi and theta (optimal vector to go home)
-            dot_prod_normalized = np.dot(goal_vec, home_vector)/(np.linalg.norm(goal_vec)*np.linalg.norm(home_vector))
-            home_theta_tot = np.arccos(np.clip(dot_prod_normalized, -1.0, 1.0))
+            theta_prime = angle_between(car_goal_vec, car_vec)
+            theta_prime_err = angle_between(car_vec, np.array([1, 0]))
+
             #deflection stored as theta_err
-            car_theta = home_theta_tot - psi
+            car_theta = theta_prime + psi - theta_prime_err
             theta_err = car_theta
 
             if np.abs(theta_err) > 30:
