@@ -26,21 +26,24 @@ class RTBAgent(Agent):
         z_t = trans.location.z
         psi = trans.rotation.yaw
 
-        start_x = start_trans[0]
-        start_z = start_trans[1]
+        goal_pos = np.array([1, 1])
+        goal_x = goal_pos[0]
+        goal_y = goal_pos[1]
 
         if trans and depth_img and start_trans is not None:
             depth_img = depth_img.copy()
             depth_img[0:len(depth_img)//2] = 0
 
             #generate vector from vehicle to home/base positions
-            home_vector = np.array([start_x - x_t, start_z - z_t])
+            home_vector = np.array([0 - x_t, 0 - z_t])
+            goal_vec = np.array([goal_x - x_t, goal_y - z_t])
 
             #finding the deflection between psi and theta (optimal vector to go home)
-            home_unit = home_vector / np.linalg.norm(home_vector)
-            home_theta = np.arccos(np.clip(np.dot(home_unit, np.array([1, 0])), -1.0, 1.0))
+            dot_prod_normalized = np.dot(goal_vec, home_vector)/(np.linalg.norm(goal_vec)*np.linalg.norm(home_vector))
+            home_theta_tot = np.arccos(np.clip(dot_prod_normalized, -1.0, 1.0))
             #deflection stored as theta_err
-            theta_err = psi-home_theta
+            car_theta = home_theta_tot - psi
+            theta_err = car_theta
 
             if np.abs(theta_err) > 30:
 
