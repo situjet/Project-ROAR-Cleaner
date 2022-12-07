@@ -12,6 +12,8 @@ import cv2
 class PAgent(Agent):
     def __init__(self, vehicle: Vehicle, agent_settings: AgentConfig, **kwargs):
         super().__init__(vehicle, agent_settings, **kwargs)
+        self.le_queue = np.array([0, 0, 0, 0])
+        self.circles = None
 
     def run_step(self, sensors_data: SensorsData, vehicle: Vehicle) -> VehicleControl:
         super().run_step(sensors_data=sensors_data, vehicle=vehicle)
@@ -32,16 +34,25 @@ class PAgent(Agent):
             x_t = trans.location.x
             z_t = trans.location.z
             psi = trans.rotation.yaw
+            velocity = self.vehicle.velocity
 
             if self.time_counter % 1 == 0:
                 circles, mask = get_circles(rgb_img)
-                # circles = np.array([[[1, 2, 3]]])
+
                 if circles is not None:
-                    for i in range(len(circles)):
-                        circles2 = np.round(circles[0, :]).astype("int")
+                    self.le_queue = np.append(self.le_queue, 1)
+                    self.circles = circles
+                else:
+                    self.le_queue = np.append(self.le_queue, 0)
+                
+                self.le_queue = self.le_queue[1:]
+                # circles = np.array([[[1, 2, 3]]])
+                if 1 in self.le_queue:
+                    for i in range(len(self.circles)):
+                        circles2 = np.round(self.circles[0, :]).astype("int")
                         cv2.circle(mask, center=(circles2[i, 0], circles2[i, 1]), radius=circles2[i, 2], color=(0, 255, 0), thickness=2)
                     
-                    u_ball, v_ball = int(circles[0][0][1]//5), int(circles[0][0][0]//5)
+                    u_ball, v_ball = int(self.circles[0][0][1]//5), int(self.circles[0][0][0]//5)
                     FOV = 69.39
                     center_u = 72
                     offset = v_ball - center_u
@@ -57,18 +68,22 @@ class PAgent(Agent):
                     x_ball = x_t + dist*np.sin(psi+theta)
                     z_ball = z_t - dist*np.cos(psi+theta)
 
-                    error = np.array([depth, theta/180])
-                    kp = np.array([[5, 0], [0, 1]])
+                    target_vel = 0.1
+                    v_scalar = (velocity.x*velocity.x + velocity.z*velocity.z) ** (1/2)
 
-                    t, s = kp@error
+                    error = np.array([depth, theta/180, v_scalar - target_vel])
+            # kp = np.array([[0.15, 0, -1.5], [0, 7, 0], [0, 0, 0]])
+                    kp = np.array([[0.15, 0, -1.5], [0, 3, 0], [0, 0, 0]])
 
-                    print(f'circles: {len(circles[0])}, theta: {theta}, dist: {dist}, depth: {depth}, u: {u_ball}, v: {v_ball}, x: {x_ball}, z: {z_ball}')
+                    t, s, v = kp@error
+
+                    print(f'circles: {len(self.circles[0])}, theta: {theta}, dist: {dist}, depth: {depth}, u: {u_ball}, v: {v_ball}, x: {x_ball}, z: {z_ball}')
                     print(f'throttle: {t}, steering: {s}\n')
 
                     return VehicleControl(throttle=t, steering=s+0.25)
                 else:
                     print('no ball')
-                cv2.imshow("img", mask)
+                # cv2.imshow("img", mask)
 
                 # if circles is not None:
 
