@@ -11,6 +11,8 @@ from ROAR.le_bozo.eecs106a_agent import EECS106Agent
 from ROAR.le_bozo.npc_agent import NPCAgent
 from ROAR.le_bozo.p_agent import PAgent
 from ROAR.le_bozo.lexplore_agent import LeXploreAgent
+from ROAR.le_bozo.mater_agent import MaterAgent
+from ROAR.le_bozo.tow_mater_agent import TowMaterAgent
 # from ROAR.agent_module.eecs106a_agent import EECS106Agent
 from ROAR.agent_module.traffic_light_detector_agent import TrafficLightDectectorAgent
 from ROAR.utilities_module.vehicle_models import Vehicle
@@ -152,10 +154,10 @@ if __name__ == '__main__':
                 time.sleep(2)
         if success or args.reconnect is False:
             # agent = PointcloudRecordingAgent(vehicle=Vehicle(), agent_settings=agent_config, should_init_default_cam=True)
-            # agent = EECS106Agent(vehicle=Vehicle(), agent_settings=agent_config, should_init_default_cam=True)
-            agent = PAgent(vehicle=Vehicle(), agent_settings=agent_config, should_init_default_cam=True)
+            # agent = PAgent(vehicle=Vehicle(), agent_settings=agent_config, should_init_default_cam=True)
             # agent = LeXploreAgent(vehicle=Vehicle(), agent_settings=agent_config, should_init_default_cam=True)
-            # agent = FreeSpaceAutoAgent(vehicle=Vehicle(), agent_settings=agent_config, should_init_default_cam=True)
+            # agent = MaterAgent(vehicle=Vehicle(), agent_settings=agent_config, should_init_default_cam=True)
+            agent = TowMaterAgent(vehicle=Vehicle(), agent_settings=agent_config, should_init_default_cam=True)
             runner = iOSUnityRunner(agent=agent, ios_config=ios_config, is_unity=args.use_unity)
             # runner.start_game_loop(auto_pilot=args.auto)
             runner.start_game_loop(auto_pilot=True)
