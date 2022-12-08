@@ -3,6 +3,7 @@ from ROAR.utilities_module.data_structures_models import SensorsData
 from ROAR.utilities_module.vehicle_models import Vehicle, VehicleControl
 from ROAR.configurations.configuration import Configuration as AgentConfig
 from ROAR.le_bozo.car_utils import *
+import time
 
 import cv2
 from collections import deque
@@ -28,6 +29,9 @@ class TowMaterAgent(Agent):
         if self.gripper_activated:
             print("opening gripper")
             commandGripper("open")
+        self.home_trans = self.vehicle.transform
+        self.rtb = False
+        self.turn_timer = 10
 
     def run_step(self, sensors_data: SensorsData, vehicle: Vehicle) -> VehicleControl:
         super().run_step(sensors_data=sensors_data, vehicle=vehicle)
@@ -41,6 +45,40 @@ class TowMaterAgent(Agent):
             x_t = trans.location.x
             z_t = trans.location.z
             psi = trans.rotation.yaw
+
+            if self.rtb:
+                if self.turn_timer > 0:
+                    return VehicleControl(throttle = 0.2, steering = 0.5)
+                else:
+                    theta, distance = get_reconstruction_td([x_t, z_t], [self.home_trans.x, self.home_trans.z])
+                    print("car x, y: ", x_t, z_t)
+                    print("Distance to home is: " + str(dist))
+
+                    if abs(dist) > self.epsilon:
+                        # travel to ball
+                        # print(f'Default to x: {x_t}, z: {z_t} ({dist}m away)')
+                        print("Loc theta is: " + str(theta))
+
+                        # print(f'x_b: {x_b}, z_b: {z_b}, theta: {theta}')
+
+                        target_vel = 0.07
+                        v_scalar = (v_t.x*v_t.x + v_t.z*v_t.z) ** (1/2)
+
+                        error = np.array([dist, theta/180, (v_scalar - target_vel)])
+
+                        kp = np.array([[0.015, 0, -1], [0, 5, 0], [0, 0, 0]])
+
+                        t, s, v = kp@error
+                        return VehicleControl(throttle=t, steering=s+0.25)
+                        
+                    else:
+                        # release
+                        print('at home')
+                        if self.gripper_activated:
+                            commandGripper("open")
+                        return VehicleControl(steering = 0.25)
+
+
             
             circles, mask = get_circles(rgb_img)
 
@@ -88,6 +126,10 @@ class TowMaterAgent(Agent):
                     print('at ball')
                     if self.gripper_activated:
                         commandGripper("close")
+                    time.sleep(1)
+                    self.rtb = True
+                    return VehicleControl(throttle = 0.2, steering = 0.5)
+
             else:
                 # look for ball
                 print('exploring')
