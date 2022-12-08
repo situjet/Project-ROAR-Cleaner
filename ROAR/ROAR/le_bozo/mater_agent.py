@@ -2,7 +2,7 @@ from ROAR.agent_module.agent import Agent
 from ROAR.utilities_module.data_structures_models import SensorsData
 from ROAR.utilities_module.vehicle_models import Vehicle, VehicleControl
 from ROAR.configurations.configuration import Configuration as AgentConfig
-from ROAR.le_bozo.ball_detector import get_circles
+from ROAR.le_bozo.car_utils import *
 import cv2
 from collections import deque
 import numpy as np
