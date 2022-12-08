@@ -43,9 +43,7 @@ class TowMaterAgent(Agent):
             psi = trans.rotation.yaw
             
             circles, mask = get_circles(rgb_img)
-
             
-
             if circles is not None:
                 # update ball_loc
                 print('Live CV')
@@ -61,33 +59,16 @@ class TowMaterAgent(Agent):
                 return VehicleControl(throttle=t, steering=s+0.25)
             
             elif self.ball_loc is not None:
-                x_b, z_b = self.ball_loc
 
-                v_cs = np.array([-x_t, -z_t])
-                v_cb = np.array([x_b - x_t, z_b - z_t])
+                theta, dist = get_reconstruction_td([x_t, z_t], self.ball_loc)
+
                 print("car x, y: ", x_t, z_t)
-                dist = np.linalg.norm(v_cb) - 0.1
                 print("Distance to ball is: " + str(dist))
 
                 if abs(dist) > self.epsilon:
                     # travel to ball
                     print(f'Last Location {self.ball_loc}')
                     # print(f'Default to x: {x_t}, z: {z_t} ({dist}m away)')
-
-                    #finding the deflection between psi and theta (optimal vector to go home)
-                    theta_prime = angle_between(v_cb, v_cs)
-                    theta_prime_err = angle_between(np.array([0, -1]), v_cs)
-                    print("theta_prime = ", theta_prime)
-                    print("theta_prime_err = ", theta_prime_err)
-                    print("psi = ", psi)
-
-
-                    #deflection stored as theta_err
-                    theta = (-(theta_prime + psi - theta_prime_err)) % 360
-                    if theta > 180:
-                        theta = theta - 360
-                    
-
                     print("Loc theta is: " + str(theta))
 
                     # print(f'x_b: {x_b}, z_b: {z_b}, theta: {theta}')

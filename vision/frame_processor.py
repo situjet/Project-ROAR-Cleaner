@@ -5,11 +5,13 @@ import cv2
 # greenLower = (29, 86, 6)
 # greenUpper = (64, 255, 255)
 greenLower = (0.09*256, 0.60*256, 0.20*256)
-greenUpper = (0.14*256, 1.00*256, 1.00*256)
+greenUpper = (0.15*256, 1.00*256, 1.00*256)
 
 def get_circles(input_frame):
     
     frame = input_frame.copy()
+
+    # frame[0:int(len(frame)//3)] = 0
 
     blurred = cv2.medianBlur(frame, 5)
     hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
@@ -28,10 +30,10 @@ def get_circles(input_frame):
         cv2.HOUGH_GRADIENT, 
         1, 
         mask.shape[0] / 4, 
-        param1=20, 
-        param2=20, 
+        param1=40, 
+        param2=10, 
         minRadius=0, 
         maxRadius=0)
+    # circles = None
 
     return circles, mask
-    

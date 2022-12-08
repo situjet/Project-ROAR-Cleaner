@@ -1,39 +1,6 @@
-# # Python code for Multiple Color Detection
-# import numpy as np
-# import cv2
-
-# greenLower = (29, 86, 0)
-# greenUpper = (64, 255, 255)
-
-# def get_circles(input_frame):
-#     frame = input_frame.copy()
-
-#     blurred = cv2.medianBlur(frame, 5)
-#     hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
-    
-#     mask = cv2.inRange(hsv, greenLower, greenUpper)
-#     mask = cv2.GaussianBlur(mask, (11, 11), 2, 2)
-
-#     circles = cv2.HoughCircles(mask, 
-#         cv2.HOUGH_GRADIENT, 
-#         1, 
-#         mask.shape[0] / 8, 
-#         param1=90, 
-#         param2=27, 
-#         minRadius=0, 
-#         maxRadius=0)
-
-#     return circles, mask
-
-
 # Python code for Multiple Color Detection
 import numpy as np
 import cv2
-
-# greenLower = (29, 86, 6)
-# greenUpper = (64, 255, 255)
-# greenLower = (0.09*256, 0.60*256, 0.20*256)
-# greenUpper = (0.14*256, 1.00*256, 1.00*256)
 
 # def get_circles(input_frame):
     
@@ -64,6 +31,24 @@ import cv2
 #         maxRadius=0)
 
 #     return circles, mask
+
+def unit_vector(vector):
+    """ Returns the unit vector of the vector.  """
+    return vector / np.linalg.norm(vector)
+
+def angle_between(v1, v2):
+    """ Returns the angle in degrees between vectors 'v1' and 'v2'::
+            >>> angle_between((1, 0, 0), (0, 1, 0))
+            1.5707963267948966
+            >>> angle_between((1, 0, 0), (1, 0, 0))
+            0.0
+            >>> angle_between((1, 0, 0), (-1, 0, 0))
+            3.141592653589793
+    """
+    v1_u = unit_vector(v1)
+    v2_u = unit_vector(v2)
+    rad = np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
+    return rad*180/np.pi
 
 greenLower = (0.09*256, 0.60*256, 0.20*256)
 greenUpper = (0.15*256, 1.00*256, 1.00*256)
@@ -118,23 +103,23 @@ def get_ball_loc(circles, depth_img, x_t, z_t, psi):
 
     return (x_b, z_b), depth, theta
 
-def unit_vector(vector):
-    """ Returns the unit vector of the vector.  """
-    return vector / np.linalg.norm(vector)
+def get_reconstruction_td(car_pos, target_pos):
+    x_t, z_t = car_pos
+    x_b, z_b = target_pos
+    v_cs = np.array([-x_t, -z_t])
+    v_cb = np.array([x_b - x_t, z_b - z_t])
 
-def angle_between(v1, v2):
-    """ Returns the angle in degrees between vectors 'v1' and 'v2'::
-            >>> angle_between((1, 0, 0), (0, 1, 0))
-            1.5707963267948966
-            >>> angle_between((1, 0, 0), (1, 0, 0))
-            0.0
-            >>> angle_between((1, 0, 0), (-1, 0, 0))
-            3.141592653589793
-    """
-    v1_u = unit_vector(v1)
-    v2_u = unit_vector(v2)
-    rad = np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
-    return rad*180/np.pi
+    dist = np.linalg.norm(v_cb) - 0.1
+
+    theta_prime = angle_between(v_cb, v_cs)
+    theta_prime_err = angle_between(np.array([0, -1]), v_cs)
+
+    theta = (-(theta_prime + psi - theta_prime_err)) % 360
+    if theta > 180:
+        theta = theta - 360
+    
+    return theta, dist
+
 
 
 
