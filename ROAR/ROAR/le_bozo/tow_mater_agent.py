@@ -48,6 +48,7 @@ class TowMaterAgent(Agent):
 
             if self.rtb:
                 if self.turn_timer > 0:
+                    self.turn_timer -= 1
                     return VehicleControl(throttle = 0.2, steering = 0.5)
                 else:
                     theta, distance = get_reconstruction_td([x_t, z_t], [self.home_trans.x, self.home_trans.z])
