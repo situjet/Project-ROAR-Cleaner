@@ -2,7 +2,7 @@ from ROAR.agent_module.agent import Agent
 from ROAR.utilities_module.data_structures_models import SensorsData
 from ROAR.utilities_module.vehicle_models import Vehicle, VehicleControl
 from ROAR.configurations.configuration import Configuration as AgentConfig
-from ROAR.le_bozo.ball_detector import *
+from ROAR.le_bozo.car_utils import *
 
 import cv2
 from collections import deque
@@ -43,7 +43,7 @@ class TowMaterAgent(Agent):
             psi = trans.rotation.yaw
             
             circles, mask = get_circles(rgb_img)
-            
+
             if circles is not None:
                 # update ball_loc
                 print('Live CV')
