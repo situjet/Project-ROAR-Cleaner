@@ -115,6 +115,7 @@ class iOSRunner:
         self.is_auto = auto_pilot
         self.logger.info("Starting Game loop")
         try:
+            print("in try")
             clock = pygame.time.Clock()
             should_continue = True
 
@@ -149,6 +150,7 @@ class iOSRunner:
         except Exception as e:
             self.logger.error(f"Something bad happend {e}")
         finally:
+            print("finished")
             self.on_finish()
 
     def smoothen_control(self, control: VehicleControl):

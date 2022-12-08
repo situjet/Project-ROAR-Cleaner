@@ -3,6 +3,7 @@ from ROAR.utilities_module.data_structures_models import SensorsData
 from ROAR.utilities_module.vehicle_models import Vehicle, VehicleControl
 from ROAR.configurations.configuration import Configuration as AgentConfig
 from ROAR.le_bozo.ball_detector import *
+
 import cv2
 from collections import deque
 import numpy as np
@@ -14,7 +15,6 @@ import skimage.measure
 
 from ROAR.le_bozo.gripper_client import *
 
-
 class TowMaterAgent(Agent):
     def __init__(self, vehicle: Vehicle, agent_settings: AgentConfig, **kwargs):
         super().__init__(vehicle, agent_settings, **kwargs)
@@ -23,8 +23,11 @@ class TowMaterAgent(Agent):
         self.circles = None
         self.ball_loc = None
         self.depth = None
-        self.epsilon = 0.1
-        self.gripper_activated = False
+        self.epsilon = 0.22
+        self.gripper_activated = True
+        if self.gripper_activated:
+            print("opening gripper")
+            commandGripper("open")
 
     def run_step(self, sensors_data: SensorsData, vehicle: Vehicle) -> VehicleControl:
         super().run_step(sensors_data=sensors_data, vehicle=vehicle)
@@ -47,50 +50,58 @@ class TowMaterAgent(Agent):
                 # update ball_loc
                 print('Live CV')
                 self.ball_loc, self.depth, theta = get_ball_loc(circles, depth_img, x_t, z_t, psi)
+                print("CV theta is: " + str(theta))
+                print("Live CV depth: ", self.depth)
 
                 target_vel = 0.1
                 v_scalar = (v_t.x*v_t.x + v_t.z*v_t.z) ** (1/2)
                 error = np.array([self.depth, theta/180, v_scalar - target_vel])
-                kp = np.array([[0.0015, 0, -1.5], [0, 3, 0], [0, 0, 0]])
+                kp = np.array([[0.015, 0, -1.5], [0, 5, 0], [0, 0, 0]])
                 t, s, v = kp@error
-                return VehicleControl(throttle=t, steering=s+0.25)qq
+                return VehicleControl(throttle=t, steering=s+0.25)
             
             elif self.ball_loc is not None:
                 x_b, z_b = self.ball_loc
 
                 v_cs = np.array([-x_t, -z_t])
                 v_cb = np.array([x_b - x_t, z_b - z_t])
-                dist = np.linalg.norm(v_cb)
+                print("car x, y: ", x_t, z_t)
+                dist = np.linalg.norm(v_cb) - 0.1
+                print("Distance to ball is: " + str(dist))
 
-                if self.depth > self.epsilon and dist > self.epsilon:
+                if abs(dist) > self.epsilon:
                     # travel to ball
                     print(f'Last Location {self.ball_loc}')
                     # print(f'Default to x: {x_t}, z: {z_t} ({dist}m away)')
 
                     #finding the deflection between psi and theta (optimal vector to go home)
                     theta_prime = angle_between(v_cb, v_cs)
-                    theta_prime_err = angle_between(v_cs, np.array([0, -1]))
+                    theta_prime_err = angle_between(np.array([0, -1]), v_cs)
+                    print("theta_prime = ", theta_prime)
+                    print("theta_prime_err = ", theta_prime_err)
+                    print("psi = ", psi)
+
 
                     #deflection stored as theta_err
-                    theta = -(theta_prime + psi - theta_prime_err) % 360
+                    theta = (-(theta_prime + psi - theta_prime_err)) % 360
                     if theta > 180:
                         theta = theta - 360
-                    past_ball = 1
-                    if abs(theta) > 90:
-                        past_ball = -1
-                    dist = dist*past_ball
+                    
+
+                    print("Loc theta is: " + str(theta))
 
                     # print(f'x_b: {x_b}, z_b: {z_b}, theta: {theta}')
 
-                    target_vel = 0.1
+                    target_vel = 0.07
                     v_scalar = (v_t.x*v_t.x + v_t.z*v_t.z) ** (1/2)
 
-                    error = np.array([dist, theta/180, past_ball*(v_scalar - target_vel)])
+                    error = np.array([dist, theta/180, (v_scalar - target_vel)])
 
-                    kp = np.array([[0.009, 0, -1], [0, 3, 0], [0, 0, 0]])
+                    kp = np.array([[0.015, 0, -1], [0, 5, 0], [0, 0, 0]])
 
                     t, s, v = kp@error
                     return VehicleControl(throttle=t, steering=s+0.25)
+                    
                 else:
                     # grip and go home
                     print('at ball')
@@ -100,8 +111,6 @@ class TowMaterAgent(Agent):
                 # look for ball
                 print('exploring')
 
-                if self.gripper_activated:
-                    commandGripper("open")
 
                 depth_img = depth_img.copy()
                 depth_img[0:int(len(depth_img)//2)] = 0
@@ -129,7 +138,7 @@ class TowMaterAgent(Agent):
                 v_scalar = (v_t.x*v_t.x + v_t.z*v_t.z) ** (1/2)
 
                 error = np.array([depth, theta/180, v_scalar - target_vel])
-                kp = np.array([[0.009, 0, -1], [0, 5, 0], [0, 0, 0]])
+                kp = np.array([[0.015, 0, -1], [0, 7, 0], [0, 0, 0]])
 
                 t, s, v = kp@error
 

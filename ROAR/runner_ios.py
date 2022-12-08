@@ -11,7 +11,7 @@ from ROAR.le_bozo.eecs106a_agent import EECS106Agent
 from ROAR.le_bozo.npc_agent import NPCAgent
 from ROAR.le_bozo.p_agent import PAgent
 from ROAR.le_bozo.lexplore_agent import LeXploreAgent
-from ROAR.le_bozo.fetch_agent import FetchAgent
+from ROAR.le_bozo.tow_mater_agent import TowMaterAgent
 # from ROAR.agent_module.eecs106a_agent import EECS106Agent
 from ROAR.agent_module.traffic_light_detector_agent import TrafficLightDectectorAgent
 from ROAR.utilities_module.vehicle_models import Vehicle
@@ -112,6 +112,7 @@ def is_glove_online(host, port):
 
 
 if __name__ == '__main__':
+    print("here")
     choices = mode_list(['ar', 'vr'])
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                         datefmt="%H:%M:%S", level=logging.DEBUG)
@@ -154,7 +155,7 @@ if __name__ == '__main__':
         if success or args.reconnect is False:
             # agent = PointcloudRecordingAgent(vehicle=Vehicle(), agent_settings=agent_config, should_init_default_cam=True)
             # agent = EECS106Agent(vehicle=Vehicle(), agent_settings=agent_config, should_init_default_cam=True)
-            agent = FetchAgent(vehicle=Vehicle(), agent_settings=agent_config, should_init_default_cam=True)
+            agent = TowMaterAgent(vehicle=Vehicle(), agent_settings=agent_config, should_init_default_cam=True)
             # agent = LeXploreAgent(vehicle=Vehicle(), agent_settings=agent_config, should_init_default_cam=True)
             # agent = FreeSpaceAutoAgent(vehicle=Vehicle(), agent_settings=agent_config, should_init_default_cam=True)
             runner = iOSUnityRunner(agent=agent, ios_config=ios_config, is_unity=args.use_unity)
