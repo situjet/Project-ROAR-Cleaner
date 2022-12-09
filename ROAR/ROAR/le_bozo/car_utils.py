@@ -103,7 +103,7 @@ def get_ball_loc(circles, depth_img, x_t, z_t, psi):
 
     return (x_b, z_b), depth, theta
 
-def get_reconstruction_td(car_pos, target_pos):
+def get_reconstruction_td(car_pos, target_pos, psi):
     x_t, z_t = car_pos
     x_b, z_b = target_pos
     v_cs = np.array([-x_t, -z_t])

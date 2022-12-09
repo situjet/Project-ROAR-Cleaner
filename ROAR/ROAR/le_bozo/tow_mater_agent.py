@@ -24,14 +24,15 @@ class TowMaterAgent(Agent):
         self.circles = None
         self.ball_loc = None
         self.depth = None
-        self.epsilon = 0.22
+        self.epsilon = 0.3
         self.gripper_activated = True
         if self.gripper_activated:
             print("opening gripper")
             commandGripper("open")
         self.home_trans = self.vehicle.transform
         self.rtb = False
-        self.turn_timer = 10
+        self.turn_timer = 100
+        self.turn_psi = 0
 
     def run_step(self, sensors_data: SensorsData, vehicle: Vehicle) -> VehicleControl:
         super().run_step(sensors_data=sensors_data, vehicle=vehicle)
@@ -46,12 +47,20 @@ class TowMaterAgent(Agent):
             z_t = trans.location.z
             psi = trans.rotation.yaw
 
+
             if self.rtb:
-                if self.turn_timer > 0:
-                    self.turn_timer -= 1
-                    return VehicleControl(throttle = 0.2, steering = 0.5)
+                print("GOING TO TURN")
+                print("psi: " + str(psi))
+                print("turn psi: " + str(self.turn_psi))
+
+                theta, dist = get_reconstruction_td([x_t, z_t], [self.home_trans.location.x, self.home_trans.location.z], psi)
+
+                if self.gripper_activated:
+                        commandGripper("close")
+
+                if abs((psi%360)-(theta%360)) < 20:
+                    return VehicleControl(throttle = 0.05, steering = 0.9)
                 else:
-                    theta, distance = get_reconstruction_td([x_t, z_t], [self.home_trans.x, self.home_trans.z])
                     print("car x, y: ", x_t, z_t)
                     print("Distance to home is: " + str(dist))
 
@@ -99,7 +108,7 @@ class TowMaterAgent(Agent):
             
             elif self.ball_loc is not None:
 
-                theta, dist = get_reconstruction_td([x_t, z_t], self.ball_loc)
+                theta, dist = get_reconstruction_td([x_t, z_t], self.ball_loc, psi)
 
                 print("car x, y: ", x_t, z_t)
                 print("Distance to ball is: " + str(dist))
@@ -125,6 +134,7 @@ class TowMaterAgent(Agent):
                 else:
                     # grip and go home
                     print('at ball')
+                    self.turn_psi = 180+ psi
                     if self.gripper_activated:
                         commandGripper("close")
                     time.sleep(1)
