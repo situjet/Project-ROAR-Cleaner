@@ -59,48 +59,36 @@ class TowMaterAgent(Agent):
                 if self.gripper_activated:
                         commandGripper("close")
 
-                if abs(psi-self.turn_psi) > 50:
-                    print((psi-self.turn_psi)%360)
-                    print("GOING TO TURN")
-                    if self.turn_timer % 20 == 0:
-                        return VehicleControl(throttle = 0.04, steering = 0.4)
-                    self.turn_timer+=1
-                    return VehicleControl(throttle = 0, steering = 0.4)
+                print("car x, y: ", x_t, z_t)
+                print("Distance to home is: " + str(dist))
+
+                self.kill+=1
+
+                if abs(dist) > self.epsilon and self.kill < 1000:
+                    # travel to ball
+                    # print(f'Default to x: {x_t}, z: {z_t} ({dist}m away)')
+                    print("Loc theta is: " + str(theta))
+
+                    # print(f'x_b: {x_b}, z_b: {z_b}, theta: {theta}')
+
+                    target_vel = 0.07
+                    v_scalar = (v_t.x*v_t.x + v_t.z*v_t.z) ** (1/2)
+
+                    error = np.array([dist, theta/180, (v_scalar - target_vel)])
+
+                    kp = np.array([[0.015, 0, -1], [0, 5, 0], [0, 0, 0]])
+
+                    t, s, v = kp@error
+                    return VehicleControl(throttle=t, steering=s+0.25)
+                    
                 else:
-                    print("car x, y: ", x_t, z_t)
-                    print("Distance to home is: " + str(dist))
-
-                    self.kill+=1
-
-                    if abs(dist) > self.epsilon and self.kill < 100:
-                        # travel to ball
-                        # print(f'Default to x: {x_t}, z: {z_t} ({dist}m away)')
-                        print("Loc theta is: " + str(theta))
-
-                        # print(f'x_b: {x_b}, z_b: {z_b}, theta: {theta}')
-
-                        target_vel = 0.07
-                        v_scalar = (v_t.x*v_t.x + v_t.z*v_t.z) ** (1/2)
-
-                        error = np.array([dist, theta/180, (v_scalar - target_vel)])
-
-                        kp = np.array([[0.015, 0, -1], [0, 5, 0], [0, 0, 0]])
-
-                        t, s, v = kp@error
-                        return VehicleControl(throttle=t, steering=s+0.25)
-                        
-                    else:
-                        # release
-                        print('at home')
-                        if self.gripper_activated:
-                            commandGripper("open")
-                        return VehicleControl(steering = 0.25)
+                    # release
+                    print('at home')
+                    if self.gripper_activated:
+                        commandGripper("open")
+                    return VehicleControl(steering = 0.25)
                 
 
-                    
-
-
-            
             circles, mask = get_circles(rgb_img)
 
             if circles is not None:
