@@ -33,6 +33,8 @@ class TowMaterAgent(Agent):
         self.rtb = False
         self.turn_timer = 100
         self.turn_psi = 0
+        self.turn_timer = 0
+        self.kill = 0
 
     def run_step(self, sensors_data: SensorsData, vehicle: Vehicle) -> VehicleControl:
         super().run_step(sensors_data=sensors_data, vehicle=vehicle)
@@ -49,7 +51,6 @@ class TowMaterAgent(Agent):
 
 
             if self.rtb:
-                print("GOING TO TURN")
                 print("psi: " + str(psi))
                 print("turn psi: " + str(self.turn_psi))
 
@@ -58,13 +59,20 @@ class TowMaterAgent(Agent):
                 if self.gripper_activated:
                         commandGripper("close")
 
-                if abs((psi%360)-(theta%360)) < 20:
-                    return VehicleControl(throttle = 0.05, steering = 0.9)
+                if abs(psi-self.turn_psi) > 50:
+                    print((psi-self.turn_psi)%360)
+                    print("GOING TO TURN")
+                    if self.turn_timer % 20 == 0:
+                        return VehicleControl(throttle = 0.04, steering = 0.4)
+                    self.turn_timer+=1
+                    return VehicleControl(throttle = 0, steering = 0.4)
                 else:
                     print("car x, y: ", x_t, z_t)
                     print("Distance to home is: " + str(dist))
 
-                    if abs(dist) > self.epsilon:
+                    self.kill+=1
+
+                    if abs(dist) > self.epsilon and self.kill < 100:
                         # travel to ball
                         # print(f'Default to x: {x_t}, z: {z_t} ({dist}m away)')
                         print("Loc theta is: " + str(theta))
@@ -87,6 +95,9 @@ class TowMaterAgent(Agent):
                         if self.gripper_activated:
                             commandGripper("open")
                         return VehicleControl(steering = 0.25)
+                
+
+                    
 
 
             
