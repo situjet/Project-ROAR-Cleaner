@@ -56,15 +56,16 @@ class TowMaterAgent(Agent):
 
                 theta, dist = get_reconstruction_td([x_t, z_t], [self.home_trans.location.x, self.home_trans.location.z], psi)
 
-                if self.gripper_activated:
-                        commandGripper("close")
 
                 print("car x, y: ", x_t, z_t)
                 print("Distance to home is: " + str(dist))
 
                 self.kill+=1
 
-                if abs(dist) > self.epsilon and self.kill < 1000:
+                if abs(dist) > self.epsilon and self.kill < 500:
+
+                    if self.gripper_activated:
+                        commandGripper("close")
                     # travel to ball
                     # print(f'Default to x: {x_t}, z: {z_t} ({dist}m away)')
                     print("Loc theta is: " + str(theta))
